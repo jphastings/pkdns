@@ -1,8 +1,13 @@
 FROM alpine:3.20
 
-COPY ./target/x86_64-unknown-linux-musl/release/pkdns /usr/local/bin
-COPY ./target/x86_64-unknown-linux-musl/release/pkdns-cli /usr/local/bin
+COPY ./pkdns /usr/local/bin
+COPY ./pkdns-cli /usr/local/bin
 
+VOLUME [ "/pkdns" ]
+
+# DNS server
 EXPOSE 53
+# DNS-over-HTTP server
+EXPOSE 3000
 
-CMD ["pkdns"]
+CMD ["pkdns", "--pkdns-dir", "/pkdns", "--config", "/pkdns/config.toml"]

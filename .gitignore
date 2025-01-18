@@ -12,5 +12,8 @@ target/
 # Mac pollution
 .DS_STORE
 
-
 .vscode
+
+# Added by goreleaser init:
+dist/
+.intentionally-empty-file.o

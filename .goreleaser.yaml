@@ -1,0 +1,112 @@
+# The lines below are called `modelines`. See `:help modeline`
+# Feel free to remove those if you don't want/need to use them.
+# yaml-language-server: $schema=https://goreleaser.com/static/schema.json
+# vim: set ts=2 sw=2 tw=0 fo=cnqoj
+
+version: 2
+
+before:
+  hooks:
+    # if you don't do these things before calling goreleaser, it might be a
+    # good idea to do them here:
+    - rustup default stable
+    - cargo install --locked cargo-zigbuild
+    - cargo fetch --locked
+
+builds:
+  - builder: rust
+    id: pkdns
+    binary: pkdns
+    flags:
+      - --release
+      - --package=pkdns
+    targets:
+      - x86_64-unknown-linux-musl
+      - x86_64-apple-darwin
+      - x86_64-pc-windows-gnu
+      - aarch64-unknown-linux-musl
+      - aarch64-apple-darwin
+  - builder: rust
+    id: pkdns-cli
+    binary: pkdns-cli
+    flags:
+      - --release
+      - --package=pkdns-cli
+    targets:
+      - x86_64-unknown-linux-musl
+      - x86_64-apple-darwin
+      - x86_64-pc-windows-gnu
+      - aarch64-unknown-linux-musl
+      - aarch64-apple-darwin
+
+archives:
+  - format: tar.gz
+    # this name template makes the OS and Arch compatible with the results of `uname`.
+    name_template: >-
+      {{ .ProjectName }}_
+      {{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
+    # use zip for windows archives
+    format_overrides:
+      - goos: windows
+        format: zip
+
+env:
+  # Fallback to tag docker images as "pkdns" if no DOCKER_IMAGE_NAME specified
+  - DOCKER_IMAGE_NAME={{ envOrDefault "DOCKER_IMAGE_NAME" "pkdns" }}
+
+dockers:
+  - goarch: amd64
+    use: buildx
+    ids:
+      - pkdns
+      - pkdns-cli
+    image_templates:
+      - "{{ .Env.DOCKER_IMAGE_NAME }}:latest-amd64"
+      - "{{ .Env.DOCKER_IMAGE_NAME }}:{{ .Tag }}-amd64"
+      - "{{ .Env.DOCKER_IMAGE_NAME }}:v{{ .Major }}-amd64"
+      - "{{ .Env.DOCKER_IMAGE_NAME }}:v{{ .Major }}.{{ .Minor }}-amd64"
+    build_flag_templates:
+      - "--pull"
+      - "--platform=linux/amd64"
+      - "--label=org.opencontainers.image.created={{.Date}}"
+      - "--label=org.opencontainers.image.title={{.ProjectName}}"
+      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
+      - "--label=org.opencontainers.image.version={{.Version}}"
+  - goarch: arm64
+    use: buildx
+    ids:
+      - pkdns
+      - pkdns-cli
+    image_templates:
+      - "{{ .Env.DOCKER_IMAGE_NAME }}:latest-arm64"
+      - "{{ .Env.DOCKER_IMAGE_NAME }}:{{ .Tag }}-arm64"
+      - "{{ .Env.DOCKER_IMAGE_NAME }}:v{{ .Major }}-arm64"
+      - "{{ .Env.DOCKER_IMAGE_NAME }}:v{{ .Major }}.{{ .Minor }}-arm64"
+    build_flag_templates:
+      - "--pull"
+      - "--platform=linux/arm64"
+      - "--label=org.opencontainers.image.created={{.Date}}"
+      - "--label=org.opencontainers.image.title={{.ProjectName}}"
+      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
+      - "--label=org.opencontainers.image.version={{.Version}}"
+
+docker_manifests:
+  - name_template: "{{ .Env.DOCKER_IMAGE_NAME }}:latest"
+    image_templates:
+      - "{{ .Env.DOCKER_IMAGE_NAME }}:latest-amd64"
+      - "{{ .Env.DOCKER_IMAGE_NAME }}:latest-arm64"
+  - name_template: "{{ .Env.DOCKER_IMAGE_NAME }}:{{ .Tag }}"
+    image_templates:
+      - "{{ .Env.DOCKER_IMAGE_NAME }}:{{ .Tag }}-amd64"
+      - "{{ .Env.DOCKER_IMAGE_NAME }}:{{ .Tag }}-arm64"
+  - name_template: "{{ .Env.DOCKER_IMAGE_NAME }}:v{{ .Major }}"
+    image_templates:
+      - "{{ .Env.DOCKER_IMAGE_NAME }}:v{{ .Major }}-amd64"
+      - "{{ .Env.DOCKER_IMAGE_NAME }}:v{{ .Major }}-arm64"
+  - name_template: "{{ .Env.DOCKER_IMAGE_NAME }}:v{{ .Major }}{{ .Minor }}"
+    image_templates:
+      - "{{ .Env.DOCKER_IMAGE_NAME }}:v{{ .Major }}{{ .Minor }}-amd64"
+      - "{{ .Env.DOCKER_IMAGE_NAME }}:v{{ .Major }}{{ .Minor }}-arm64"

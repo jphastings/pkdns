@@ -29,6 +29,21 @@ Use one of the [hosted DNS servers](./servers.txt) to try out pkdns quickly.
 6. [Browse](#browse-the-self-sovereign-web) the self-sovereign web.
 
 
+## Docker
+
+Pre-built docker images are available for each release of this repo for both amd64 and arm64 architectures. Make sure to expose the ports you're using — by default port 53 for DNS, and port 3000 if you want DNS-over-HTTP. Mounting a directory to `/pkdns` will have the container load the `config.toml` inside, and persist caches between container restarts.
+
+```sh
+$ docker run \
+  -v /path/to/your/base/dir:/pkdns \
+  -p 53:53 \
+  -p 3000:3000 \
+  ghcr.io/pubky/pkdns:v0.7-amd64
+```
+
+If your docker client supports [manifests](https://docs.docker.com/reference/cli/docker/manifest/) then you can omit the `-amd64` or `-arm64` label suffix.
+
+
 ### Build It Yourself
 
 Make sure you have the [Rust toolchain](https://rustup.rs/) installed.
